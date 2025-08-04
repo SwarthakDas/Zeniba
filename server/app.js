@@ -1,19 +1,30 @@
 import express from "express";
-import cors from "cors"
+import cors from "cors";
+import session from "express-session";
 import dotenv from "dotenv";
-dotenv.config()
+import { router as authRoutes } from "./routes/auth.js";
 
-const app=express()
+dotenv.config();
+
+const app = express();
+
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+}));
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
-    methods:["GET","POST"],
-    allowedHeaders:["Authorization","Content-Type"],
-    credentials:true
-}))
+  origin: process.env.CLIENT_URL,
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Authorization", "Content-Type"],
+  credentials: true,
+}));
 
-app.use(express.json({limit:"64kb"}))
-app.use(express.urlencoded({extended:true, limit:"1mb"}))
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+app.use("/auth", authRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -25,4 +36,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-export {app}
+export {app};
