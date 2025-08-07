@@ -1,18 +1,11 @@
 import express from "express";
 import cors from "cors";
-import session from "express-session";
 import dotenv from "dotenv";
 import { router as authRoutes } from "./routes/auth.js";
 
 dotenv.config();
 
 const app = express();
-
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true,
-}));
 
 app.use(cors({
   origin: process.env.CLIENT_URL,

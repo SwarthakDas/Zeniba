@@ -1,7 +1,10 @@
 import { google } from "googleapis";
 import crypto from "crypto";
 import https from "https";
-import {asyncHandler} from "../utils/asyncHandler.js";
+import {AsyncHandler} from "../utils/AsyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import {ApiResponse} from "../utils/ApiResponse.js"
+import User from "../models/User.js";
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.AUTH_CLIENT_ID,
@@ -9,16 +12,13 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.AUTH_REDIRECT_URL
 );
 
-let userCredential = null;
-
 const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile'
 ];
 
-export const googleAuthRedirect = asyncHandler(async (req, res) => {
+export const googleAuthRedirect = AsyncHandler(async (req, res) => {
   const state = crypto.randomBytes(32).toString("hex");
-  req.session.state = state;
 
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
@@ -30,105 +30,81 @@ export const googleAuthRedirect = asyncHandler(async (req, res) => {
   res.redirect(authUrl);
 });
 
-export const googleAuthCallback = asyncHandler(async (req, res) => {
-  const { code, state } = req.query;
-
-  if (state !== req.session.state) {
-    return res.status(403).send("State mismatch, possible CSRF");
-  }
+export const googleAuthCallback = AsyncHandler(async (req, res) => {
+  const { code } = req.query;
 
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
-  req.app.locals.userCredential = tokens;
-
 
   const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
   const { data } = await oauth2.userinfo.get();
 
-  console.log("User Info:");
-  console.log("Name:", data.name);
-  console.log("Email:", data.email);
+  let user = await User.findOne({ email: data.email });
 
-  res.json({
-    message: "Authentication successful",
-    tokens
-  });
-});
-
-export const revokeToken = asyncHandler((req, res) => {
-  if (!userCredential?.access_token) {
-    return res.status(400).send("No active token to revoke");
-  }
-
-  const postData = `token=${userCredential.access_token}`;
-  const options = {
-    host: "oauth2.googleapis.com",
-    port: 443,
-    path: "/revoke",
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Content-Length": Buffer.byteLength(postData),
-    },
-  };
-
-  const revokeReq = https.request(options, (response) => {
-    response.setEncoding("utf8");
-    response.on("data", (d) => {
-      console.log("Revoked: ", d);
-    });
-    response.on("end", () => res.send("Token revoked"));
-  });
-
-  revokeReq.on("error", (error) => {
-    console.error("Revoke error:", error);
-    res.status(500).send("Failed to revoke token");
-  });
-
-  revokeReq.write(postData);
-  revokeReq.end();
-});
-
-export const getUserDetails = async (req, res) => {
-  const access_token  = req.app.locals.userCredential.access_token;
-
-  if (!access_token) {
-    return res.status(401).json({ message: "Missing access token" });
-  }
-
-  try {
-    oauth2Client.setCredentials({ access_token });
-    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-    const { data } = await oauth2.userinfo.get();
-
-    res.json({
+  if (!user) {
+    user = await User.create({
       name: data.name,
       email: data.email,
-      picture: data.picture,
     });
-  } catch (err) {
-    console.error("User info fetch failed:", err);
-    res.status(500).json({ message: "Failed to fetch user info" });
   }
-};
-//   const { access_token } = req.body;
+  return res.status(200).json(
+    new ApiResponse(200,{access_token:tokens.access_token},"Authentication successful")
+  )
+});
 
-//   if (!access_token) {
-//     return res.status(401).json({ message: "Missing access token" });
-//   }
+export const logout = AsyncHandler((req, res) => {
+  const access_token = req.headers["x-access-token"];
+  const refresh_token = req.headers["x-refresh-token"];
 
-//   try {
-//     oauth2Client.setCredentials({ access_token });
-//     const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-//     const { data } = await oauth2.userinfo.get();
+  if (!access_token && !refresh_token) {
+    return res.status(400).send("No tokens found to revoke");
+  }
 
-//     res.json({
-//       name: data.name,
-//       email: data.email,
-//       picture: data.picture,
-//     });
-//   } catch (err) {
-//     console.error("User info fetch failed:", err);
-//     res.status(500).json({ message: "Failed to fetch user info" });
-//   }
-// };
+  const revokeToken = (token) => {
+    return new Promise((resolve, reject) => {
+      const postData = `token=${token}`;
+      const options = {
+        host: "oauth2.googleapis.com",
+        port: 443,
+        path: "/revoke",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(postData),
+        },
+      };
+
+      const revokeReq = https.request(options, (response) => {
+        response.setEncoding("utf8");
+        response.on("data", (d) => console.log("Revoked: ", d));
+        response.on("end", resolve);
+      });
+
+      revokeReq.on("error", (error) => {
+        console.error("Revoke error:", error);
+        reject(error);
+      });
+
+      revokeReq.write(postData);
+      revokeReq.end();
+    });
+  };
+
+  Promise.all([
+    access_token ? revokeToken(access_token) : Promise.resolve(),
+    refresh_token ? revokeToken(refresh_token) : Promise.resolve()
+  ])
+  .then(() => {
+    req.user = null;
+  })
+  .catch((err) => {
+    throw new ApiError(401, "Invalid refresh token")
+  });
+});
+
+export const getUserDetails = AsyncHandler(async (req, res) => {
+  if(!req.user)throw new ApiError(401,"User not authenticated");
+  return res.status(200).json(
+    new ApiResponse(200,{email:req.user.email},"User fetched successfully")
+  )
+});
