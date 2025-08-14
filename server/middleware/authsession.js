@@ -1,5 +1,6 @@
 import axios from "axios";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
+import User from "../models/User.js";
 
 export const authsession = AsyncHandler(async (req, res, next) => {
     const accessToken = req.headers["x-access-token"];
@@ -9,6 +10,9 @@ export const authsession = AsyncHandler(async (req, res, next) => {
     const response = await axios.get(
       `https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`
     );
-    req.user = {email:response.data.email};
+    const user=await User.findOne({email:response.data.email}).select("_id")
+    if (!user)throw new ApiError(401, "Invalid Access Token: User not found");
+
+    req.user = user;
     next();
 });

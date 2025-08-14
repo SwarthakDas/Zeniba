@@ -104,7 +104,9 @@ export const logout = AsyncHandler((req, res) => {
 
 export const getUserDetails = AsyncHandler(async (req, res) => {
   if(!req.user)throw new ApiError(401,"User not authenticated");
+  const user=await User.findById(req.user._id).select("email name")
+  if(!user)throw new ApiError(500, "User not found");
   return res.status(200).json(
-    new ApiResponse(200,{email:req.user.email},"User fetched successfully")
+    new ApiResponse(200,user,"User fetched successfully")
   )
 });
