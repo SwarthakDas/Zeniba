@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.example.zeniba"
-    compileSdk = 33
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.zeniba"
         minSdk = 26
-        targetSdk = 33
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -40,6 +40,7 @@ android {
         compose = true
     }
     composeOptions {
+        // Minimal update for compatibility
         kotlinCompilerExtensionVersion = "1.4.3"
     }
     packaging {
@@ -50,7 +51,6 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -66,4 +66,14 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    implementation ("androidx.compose.material3:material3:1.2.1")
+    //In compose BoM
+    implementation("androidx.compose.material:material-icons-extended")
+
+// Or if you are using .kts
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+
+
+
 }
