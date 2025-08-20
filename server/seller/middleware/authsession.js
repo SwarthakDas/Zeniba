@@ -1,6 +1,6 @@
 import axios from "axios";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
-import User from "../../buyer/models/User.js"
+import User from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 
 export const authsession = AsyncHandler(async (req, res, next) => {

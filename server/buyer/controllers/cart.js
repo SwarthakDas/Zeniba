@@ -73,7 +73,7 @@ export const removeCartItem = AsyncHandler(async (req, res) => {
   const item = cart.items.id(itemId);
   if (!item) throw new ApiError(404, "Cart item not found");
 
-  item.remove();
+  cart.items.pull({ _id: itemId });
   await cart.save();
 
   return res

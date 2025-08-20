@@ -5,6 +5,8 @@ import {AsyncHandler} from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js"
 import User from "../../buyer/models/User.js";
+import dotenv from "dotenv"
+dotenv.config()
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.AUTH_CLIENT_ID,

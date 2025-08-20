@@ -4,7 +4,7 @@ import { checkout, getOrderById, getOrders, placeOrder } from "../controllers/or
 
 export const router=Router()
 
-router.post("/checkout", authsession,checkout);
+router.get("/checkout", authsession,checkout);
 router.post("/orders", authsession,placeOrder);
 router.get("/orders", authsession,getOrders);
 router.get("/orders/:id", authsession,getOrderById);
