@@ -2,6 +2,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { router as authRoutes } from "./routes/auth.js";
+import { router as cartRoutes } from "./routes/cart.js";
+import { router as discoverRoutes } from "./routes/discover.js";
+import { router as orderhRoutes } from "./routes/order.js";
+import { router as reviewRoutes } from "./routes/review.js";
+import { router as wishlistRoutes } from "./routes/wishlist.js";
 
 dotenv.config();
 
@@ -9,7 +14,6 @@ const app = express();
 
 app.use(cors({
   origin: process.env.CLIENT_URL,
-  methods: ["GET", "POST"],
   allowedHeaders: ["Authorization", "Content-Type"],
   credentials: true,
 }));
@@ -18,6 +22,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 app.use("/auth", authRoutes);
+app.use("", cartRoutes,discoverRoutes,orderhRoutes,reviewRoutes,wishlistRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
