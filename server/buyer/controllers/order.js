@@ -4,6 +4,13 @@ import Product from "../models/Product.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import Razorpay from "razorpay"
+import crypto from "crypto"
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_ID_KEY,
+  key_secret: process.env.RAZORPAY_SECRET_KEY,
+});
 
 export const checkout = AsyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate("items.product","-createdAt -updatedAt -__v -stock")
@@ -104,54 +111,64 @@ export const cancelOrder = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, "Order cancelled successfully"));
 });
 
-/**
- * 📌 POST /payment/initiate → Initiate payment
- * (Mock integration for now)
- */
 export const initiatePayment = AsyncHandler(async (req, res) => {
-  const { orderId } = req.body;
-  if (!orderId) throw new ApiError(400, "Order ID required");
+  const { orderid } = req.body;
+  if (!orderid) throw new ApiError(400, "Order ID required");
 
-  const order = await Order.findById(orderId);
+  const order = await Order.findById(orderid);
   if (!order) throw new ApiError(404, "Order not found");
 
   if (order.paymentStatus !== "pending") {
     throw new ApiError(400, "Payment already processed");
   }
 
-  // Mock payment gateway response
-  const paymentSession = {
-    orderId: order._id,
-    amount: order.totalPrice,
-    paymentUrl: `https://mockpay.com/session/${order._id}`
+  const options = {
+    amount: order.totalPrice * 100, // in paise
+    currency: "INR",
+    receipt: `order_rcpt_${order._id}`,
   };
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, paymentSession, "Payment initiated"));
+  const razorpayOrder = await razorpay.orders.create(options);
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      orderId: order._id,
+      razorpayOrderId: razorpayOrder.id,
+      amount: options.amount,
+      currency: options.currency,
+      key: process.env.RAZORPAY_ID_KEY,
+    }, "Payment initiated")
+  );
 });
 
-/**
- * 📌 POST /payment/verify → Verify payment
- * (Mock verification)
- */
 export const verifyPayment = AsyncHandler(async (req, res) => {
-  const { orderId, success } = req.body;
-  if (!orderId) throw new ApiError(400, "Order ID required");
+  const { orderid, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-  const order = await Order.findById(orderId);
-  if (!order) throw new ApiError(404, "Order not found");
-
-  if (success) {
-    order.paymentStatus = "paid";
-    order.status = "processing";
-  } else {
-    order.paymentStatus = "failed";
+  if (!orderid || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    throw new ApiError(400, "Missing payment details");
   }
 
-  await order.save();
+  const order = await Order.findById(orderid);
+  if (!order) throw new ApiError(404, "Order not found");
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, order, "Payment status updated"));
+  const body = razorpay_order_id + "|" + razorpay_payment_id;
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_SECRET_KEY)
+    .update(body.toString())
+    .digest("hex");
+
+  if (expectedSignature === razorpay_signature) {
+    order.paymentStatus = "paid";
+    order.status = "processing";
+    await order.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, order, "Payment verified successfully"));
+  } else {
+    order.paymentStatus = "failed";
+    await order.save();
+
+    throw new ApiError(400, "Invalid payment signature");
+  }
 });

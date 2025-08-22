@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authsession } from "../middleware/authsession.js";
-import { cancelOrder, checkout, getOrderById, getOrders, placeOrder } from "../controllers/order.js";
+import { cancelOrder, checkout, getOrderById, getOrders, initiatePayment, placeOrder, verifyPayment } from "../controllers/order.js";
 
 export const router=Router()
 
@@ -9,3 +9,5 @@ router.post("/orders", authsession,placeOrder);
 router.get("/orders", authsession,getOrders);
 router.get("/orders/:orderid", authsession,getOrderById);
 router.patch("/orders/:orderid/cancel", authsession,cancelOrder);
+router.post("/payment/initiate",authsession,initiatePayment)
+router.post("/payment/verify",authsession,verifyPayment)

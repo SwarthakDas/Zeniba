@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
 export const addProduct = AsyncHandler(async (req, res) => {
-  const { name, description, price, stock } = req.body;
+  const { name, description, price, stock,category,brand } = req.body;
   const sellerId = req.user._id;
 
   if (!name || !price || !stock) {
@@ -15,6 +15,8 @@ export const addProduct = AsyncHandler(async (req, res) => {
     name,
     description,
     price,
+    category,
+    brand,
     stock,
     seller: sellerId,
   });
@@ -30,7 +32,7 @@ export const updateProduct = AsyncHandler(async (req, res) => {
 
   const product = await Product.findOneAndUpdate(
     { _id: productid, seller: sellerId },
-    { $set: req.body }, //{ name, description, price, stock }
+    { $set: req.body }, //{ name, description, price, stock,category,brand }
     { new: true }
   );
 
