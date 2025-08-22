@@ -4,9 +4,8 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-// 📌 GET /wishlist → Get wishlist items
 export const getWishlist = AsyncHandler(async (req, res) => {
-  const wishlist = await Wishlist.findOne({ user: req.user._id }).populate("products");
+  const wishlist = await Wishlist.findOne({ user: req.user._id }).populate("products","-createdAt -updatedAt -seller -__v -stock").select("products");
   if (!wishlist || wishlist.products.length === 0) {
     throw new ApiError(404, "Wishlist is empty");
   }
@@ -16,7 +15,6 @@ export const getWishlist = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, wishlist, "Wishlist fetched successfully"));
 });
 
-// 📌 POST /wishlist → Add to wishlist
 export const addToWishlist = AsyncHandler(async (req, res) => {
   const { productId } = req.body;
   if (!productId) throw new ApiError(400, "Product ID is required");
@@ -39,10 +37,9 @@ export const addToWishlist = AsyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, wishlist, "Product added to wishlist successfully"));
+    .json(new ApiResponse(200, null, "Product added to wishlist successfully"));
 });
 
-// 📌 DELETE /wishlist/:productId → Remove from wishlist
 export const removeFromWishlist = AsyncHandler(async (req, res) => {
   const { productId } = req.params;
 
@@ -57,5 +54,5 @@ export const removeFromWishlist = AsyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, wishlist, "Product removed from wishlist successfully"));
+    .json(new ApiResponse(200, null, "Product removed from wishlist successfully"));
 });

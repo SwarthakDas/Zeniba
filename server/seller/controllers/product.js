@@ -3,7 +3,6 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-// Add new product
 export const addProduct = AsyncHandler(async (req, res) => {
   const { name, description, price, stock } = req.body;
   const sellerId = req.user._id;
@@ -25,14 +24,13 @@ export const addProduct = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(201, product, "Product added successfully"));
 });
 
-// Update product
 export const updateProduct = AsyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { productid } = req.params;
   const sellerId = req.user._id;
 
   const product = await Product.findOneAndUpdate(
-    { _id: id, seller: sellerId },
-    { $set: req.body },
+    { _id: productid, seller: sellerId },
+    { $set: req.body }, //{ name, description, price, stock }
     { new: true }
   );
 
@@ -45,12 +43,11 @@ export const updateProduct = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, product, "Product updated successfully"));
 });
 
-// Delete product
 export const deleteProduct = AsyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { productid } = req.params;
   const sellerId = req.user._id;
 
-  const product = await Product.findOneAndDelete({ _id: id, seller: sellerId });
+  const product = await Product.findOneAndDelete({ _id: productid, seller: sellerId });
 
   if (!product) {
     throw new ApiError(404, "Product not found or unauthorized");
@@ -61,7 +58,6 @@ export const deleteProduct = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Product deleted successfully"));
 });
 
-// Get seller’s own products
 export const getMyProducts = AsyncHandler(async (req, res) => {
   const sellerId = req.user._id;
   const products = await Product.find({ seller: sellerId });

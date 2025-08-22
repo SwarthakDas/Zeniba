@@ -5,12 +5,8 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-/**
- * 📌 POST /checkout → Start checkout
- * Fetches cart items, calculates total price
- */
 export const checkout = AsyncHandler(async (req, res) => {
-  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
+  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product","-createdAt -updatedAt -__v -stock")
   if (!cart || cart.items.length === 0) throw new ApiError(404, "Cart is empty");
 
   let totalPrice = 0;
@@ -26,14 +22,11 @@ export const checkout = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { items: cart.items, totalPrice }, "Checkout summary fetched"));
 });
 
-/**
- * 📌 POST /orders → Place an order
- */
 export const placeOrder = AsyncHandler(async (req, res) => {
   const { shippingAddress } = req.body;
   if (!shippingAddress) throw new ApiError(400, "Shipping address required");
 
-  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product");
+  const cart = await Cart.findOne({ user: req.user._id }).populate("items.product","-createdAt -updatedAt -__v -stock");
   if (!cart || cart.items.length === 0) throw new ApiError(404, "Cart is empty");
 
   let totalPrice = 0;
@@ -50,28 +43,30 @@ export const placeOrder = AsyncHandler(async (req, res) => {
     totalPrice,
     shippingAddress,
     paymentStatus: "pending",
-    status: "pending"
+    status: "pending",
+    seller: cart.items[0].product.seller
   });
 
-  // reduce stock
   for (let item of cart.items) {
     await Product.findByIdAndUpdate(item.product._id, { $inc: { stock: -item.quantity } });
   }
-
-  // clear cart
   cart.items = [];
   await cart.save();
 
+  const populatedOrder = await Order.findById(order._id)
+    .select("-createdAt -updatedAt -__v")
+    .populate({
+      path: "items.product",
+      select: "-createdAt -updatedAt -__v -stock"
+    });
+
   return res
     .status(201)
-    .json(new ApiResponse(201, order, "Order placed successfully"));
+    .json(new ApiResponse(201, populatedOrder, "Order placed successfully"));
 });
 
-/**
- * 📌 GET /orders → Buyer’s order list
- */
 export const getOrders = AsyncHandler(async (req, res) => {
-  const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const orders = await Order.find({ user: req.user._id }).select("-createdAt -updatedAt -__v").sort({ createdAt: -1 }).populate("items.product", "name price").populate("user", "name email");
   if (!orders.length) throw new ApiError(404, "No orders found");
 
   return res
@@ -79,11 +74,8 @@ export const getOrders = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, orders, "Orders fetched successfully"));
 });
 
-/**
- * 📌 GET /orders/:id → Buyer’s order details
- */
 export const getOrderById = AsyncHandler(async (req, res) => {
-  const order = await Order.findOne({ _id: req.params.id, user: req.user._id }).populate("items.product");
+  const order = await Order.findOne({ _id: req.params.orderid, user: req.user._id }).select("-createdAt -updatedAt -__v").populate("items.product", "name price").populate("user", "name email")
   if (!order) throw new ApiError(404, "Order not found");
 
   return res
@@ -91,11 +83,8 @@ export const getOrderById = AsyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order, "Order details fetched successfully"));
 });
 
-/**
- * 📌 PATCH /orders/:id/cancel → Cancel order
- */
 export const cancelOrder = AsyncHandler(async (req, res) => {
-  const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+  const order = await Order.findOne({ _id: req.params.orderid, user: req.user._id });
   if (!order) throw new ApiError(404, "Order not found");
 
   if (order.status !== "pending") {

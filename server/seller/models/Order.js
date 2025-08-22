@@ -36,6 +36,11 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "paid", "failed"],
     default: "pending",
+  },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   }
 }, { timestamps: true });
 

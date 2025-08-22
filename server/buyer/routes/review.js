@@ -4,7 +4,7 @@ import { addReview, deleteReview, getReviews, updateReview } from "../controller
 
 export const router=Router()
 
-router.post("/products/:id/reviews", authsession,addReview);
-router.get("/products/:id/reviews", authsession,getReviews);
-router.patch("/reviews/:id", authsession,updateReview);
-router.delete("/reviews/:id", authsession,deleteReview);
+router.post("/reviews", authsession,addReview);
+router.get("/reviews/:productId", authsession,getReviews);
+router.patch("/reviews", authsession,updateReview);
+router.delete("/reviews/:productId", authsession,deleteReview);

@@ -4,12 +4,8 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-/**
- * 📌 POST /products/:id/reviews → Add review
- */
 export const addReview = AsyncHandler(async (req, res) => {
-  const { id: productId } = req.params;
-  const { rating, comment } = req.body;
+  const { productId, rating, comment } = req.body;
 
   if (!rating || rating < 1 || rating > 5) {
     throw new ApiError(400, "Rating must be between 1 and 5");
@@ -21,44 +17,45 @@ export const addReview = AsyncHandler(async (req, res) => {
   const existingReview = await Review.findOne({ product: productId, user: req.user._id });
   if (existingReview) throw new ApiError(400, "You have already reviewed this product");
 
-  const review = await Review.create({
+  let review = await Review.create({
     product: productId,
     user: req.user._id,
     rating,
     comment
   });
 
+   review = await Review.findById(review._id)
+    .populate("product", "name description")
+    .populate("user", "name")
+    .select("-__v -createdAt");
+
   return res
     .status(201)
-    .json(new ApiResponse(201, review, "Review added successfully"));
+    .json(new ApiResponse(201, {product:review.product,user:req.user._id,rating,comment}, "Review added successfully"));
 });
 
-/**
- * 📌 GET /products/:id/reviews → Get reviews
- */
 export const getReviews = AsyncHandler(async (req, res) => {
-  const { id: productId } = req.params;
+  const { productId } = req.params;
 
   const product = await Product.findById(productId);
   if (!product) throw new ApiError(404, "Product not found");
 
   const reviews = await Review.find({ product: productId })
-    .populate("user", "name pic")
-    .sort({ createdAt: -1 });
+    .populate("user", "name")
+    .populate("product", "name description")
+    .sort({ createdAt: -1 })
+    .lean()
+    .select("-createdAt -__v");
 
   return res
     .status(200)
     .json(new ApiResponse(200, reviews, "Reviews fetched successfully"));
 });
 
-/**
- * 📌 PATCH /reviews/:id → Edit review
- */
 export const updateReview = AsyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { rating, comment } = req.body;
+  const { productId, rating, comment } = req.body;
 
-  const review = await Review.findOne({ _id: id, user: req.user._id });
+  let review = await Review.findOne({ product: productId, user: req.user._id });
   if (!review) throw new ApiError(404, "Review not found");
 
   if (rating) {
@@ -71,18 +68,20 @@ export const updateReview = AsyncHandler(async (req, res) => {
 
   await review.save();
 
+  review = await Review.findById(review._id)
+    .populate("product", "name description")
+    .populate("user", "name")
+    .select("-__v -createdAt");
+
   return res
     .status(200)
     .json(new ApiResponse(200, review, "Review updated successfully"));
 });
 
-/**
- * 📌 DELETE /reviews/:id → Delete review
- */
 export const deleteReview = AsyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { productId } = req.params;
 
-  const review = await Review.findOne({ _id: id, user: req.user._id });
+  const review = await Review.findOne({ product: productId, user: req.user._id });
   if (!review) throw new ApiError(404, "Review not found");
 
   await review.deleteOne();

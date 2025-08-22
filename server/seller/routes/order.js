@@ -5,5 +5,5 @@ import { getOrderDetails, getSellerOrders, updateOrderStatus } from "../controll
 export const router=Router()
 
 router.get("/orders", authsession,getSellerOrders);
-router.post("/orders/:id", authsession,getOrderDetails);
-router.patch("/orders/:id", authsession,updateOrderStatus);
+router.post("/orders/:orderid", authsession,getOrderDetails);
+router.patch("/orders", authsession,updateOrderStatus);

@@ -5,7 +5,7 @@ import { authsession } from "../middleware/authsession.js";
 export const router=Router()
 
 router.get("/products", getProducts);
-router.get("/products/:id", getProductById);
+router.get("/products/:productid", getProductById);
 router.get("/categories", getCategories);
 router.get("/brands", getBrands);
 router.get("/search", searchProducts);
