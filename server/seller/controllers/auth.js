@@ -4,7 +4,7 @@ import https from "https";
 import {AsyncHandler} from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js"
-import User from "../../buyer/models/User.js";
+import User from "../models/User.js";
 import dotenv from "dotenv"
 dotenv.config()
 
