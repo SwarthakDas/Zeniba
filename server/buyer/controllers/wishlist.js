@@ -3,6 +3,8 @@ import Product from "../models/Product.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { getEmbedding } from "../utils/getEmbeddings.js"
+import Embedding from "../models/Embedding.js"
 
 export const getWishlist = AsyncHandler(async (req, res) => {
   const wishlist = await Wishlist.findOne({ user: req.user._id }).populate("products","-createdAt -updatedAt -seller -__v -stock").select("products");
@@ -34,6 +36,20 @@ export const addToWishlist = AsyncHandler(async (req, res) => {
 
   wishlist.products.push(productId);
   await wishlist.save();
+
+  try {
+    const hfEmbedding = await getEmbedding(product.name);
+    const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
+
+    await Embedding.create({
+      user: req.user._id,
+      type: "wishlist",
+      product: product._id,
+      embedding,
+    });
+  } catch (err) {
+    console.error("Wishlist embedding log failed:", err.message);
+  }
 
   return res
     .status(200)

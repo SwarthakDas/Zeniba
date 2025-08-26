@@ -6,6 +6,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Razorpay from "razorpay"
 import crypto from "crypto"
+import { getEmbedding } from "../utils/getEmbeddings.js"
+import Embedding from "../models/Embedding.js"
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_ID_KEY,
@@ -66,6 +68,23 @@ export const placeOrder = AsyncHandler(async (req, res) => {
       path: "items.product",
       select: "-createdAt -updatedAt -__v -stock"
     });
+
+    try {
+    for (let item of populatedOrder.items) {
+      const hfEmbedding = await getEmbedding(item.product.name);
+      const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
+
+      await Embedding.create({
+        user: req.user._id,
+        type: "order",
+        product: item.product._id,
+        embedding,
+        metadata: { quantity: item.quantity },
+      });
+    }
+  } catch (err) {
+    console.error("Order embedding log failed:", err.message);
+  }
 
   return res
     .status(201)
