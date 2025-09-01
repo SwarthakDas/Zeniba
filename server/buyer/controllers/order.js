@@ -7,7 +7,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import Razorpay from "razorpay"
 import crypto from "crypto"
 import { getEmbedding } from "../utils/getEmbeddings.js"
-import Embedding from "../models/Embedding.js"
+import ProductEmbedding from "../models/ProductEmbedding.js"
+import UserEmbedding from "../models/UserEmbedding.js"
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_ID_KEY,
@@ -69,18 +70,30 @@ export const placeOrder = AsyncHandler(async (req, res) => {
       select: "-createdAt -updatedAt -__v -stock"
     });
 
-    try {
+  try {
     for (let item of populatedOrder.items) {
-      const hfEmbedding = await getEmbedding(item.product.name);
-      const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
+      let productEmbedding = await ProductEmbedding.findOne({ product: item.product._id });
+      if (!productEmbedding) {
+        const hfEmbedding = await getEmbedding(item.product.name);
+        const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
 
-      await Embedding.create({
-        user: req.user._id,
-        type: "order",
-        product: item.product._id,
-        embedding,
-        metadata: { quantity: item.quantity },
-      });
+        productEmbedding = await ProductEmbedding.create({
+          product: item.product._id,
+          embedding,
+          metadata: { name: item.product.name },
+        });
+      }
+
+      await UserEmbedding.findOneAndUpdate(
+        { user: req.user._id, item: item.product._id, type: "order" },
+        {
+          $set: {
+            embedding: productEmbedding.embedding,
+            metadata: { quantity: item.quantity },
+          },
+        },
+        { upsert: true, new: true }
+      );
     }
   } catch (err) {
     console.error("Order embedding log failed:", err.message);

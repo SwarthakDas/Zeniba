@@ -3,7 +3,8 @@ import {AsyncHandler} from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js"
 import { getEmbedding, cosineSimilarity } from "../utils/getEmbeddings.js"
-import Embedding from "../models/Embedding.js"
+import ProductEmbedding from "../models/ProductEmbedding.js"
+import UserEmbedding from "../models/UserEmbedding.js"
 
 export const getProducts = AsyncHandler(async (req, res) => {
   const { category, minPrice, maxPrice, rating, sort } = req.query;
@@ -68,24 +69,29 @@ export const searchProducts = AsyncHandler(async (req, res) => {
     throw new ApiError(500, "Failed to generate query embedding");
   }
 
-  const products = await Product.find({}, "name description embedding seller")
-  .populate("seller", "name email -_id")
-  .lean();
-  if (!products.length) return res.status(200).json(new ApiResponse(200, [], "No products found"));
+  const productEmbeddings = await ProductEmbedding.find({})
+    .populate("product", "name description seller")
+    .lean();
 
-  const scoredProducts = products.map((p) => ({
+  if (!productEmbeddings.length) {
+    return res.status(200).json(new ApiResponse(200, [], "No products found"));
+  }
+
+  const scoredProducts = productEmbeddings.map((p) => ({
     ...p,
     similarity: cosineSimilarity(queryEmbedding, p.embedding || []),
   }));
   scoredProducts.sort((a, b) => b.similarity - a.similarity);
 
-  await Embedding.create({
-    user: req.user?._id,
-    type: "search",
-    query: q,
-    embedding: queryEmbedding,
-    metadata: { resultsCount: scoredProducts.length },
-  });
+  if (req.user?._id) {
+    await UserEmbedding.create({
+      user: req.user._id,
+      item: null,
+      type: "search",
+      embedding: queryEmbedding,
+      metadata: { query: q, resultsCount: scoredProducts.length },
+    });
+  }
 
   return res
     .status(200)

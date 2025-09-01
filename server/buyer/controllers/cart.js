@@ -4,7 +4,8 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { getEmbedding } from "../utils/getEmbeddings.js"
-import Embedding from "../models/Embedding.js"
+import ProductEmbedding from "../models/ProductEmbedding.js"
+import UserEmbedding from "../models/UserEmbedding.js"
 
 export const getCart = AsyncHandler(async (req, res) => {
   const cart = await Cart.findOne({ user: req.user._id }).populate("items.product","name description price");
@@ -39,16 +40,28 @@ export const addToCart = AsyncHandler(async (req, res) => {
   await cart.save();
 
   try {
-    const hfEmbedding = await getEmbedding(product.name);
-    const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
+    let productEmbedding = await ProductEmbedding.findOne({ product: product._id });
+    if (!productEmbedding) {
+      const hfEmbedding = await getEmbedding(product.name);
+      const embedding = Array.isArray(hfEmbedding[0]) ? hfEmbedding[0] : hfEmbedding;
 
-    await Embedding.create({
-      user: req.user._id,
-      type: "cart",
-      product: product._id,
-      embedding,
-      metadata: { quantity },
-    });
+      productEmbedding = await ProductEmbedding.create({
+        product: product._id,
+        embedding,
+        metadata: { name: product.name },
+      });
+    }
+
+    await UserEmbedding.findOneAndUpdate(
+      { user: req.user._id, item: product._id, type: "cart" },
+      {
+        $set: {
+          embedding: productEmbedding.embedding,
+          metadata: { quantity },
+        },
+      },
+      { upsert: true, new: true }
+    );
   } catch (err) {
     console.error("Cart embedding log failed:", err.message);
   }

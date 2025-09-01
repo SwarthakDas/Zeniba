@@ -2,6 +2,8 @@ import Product from "../models/Product.js";
 import { AsyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import ProductEmbedding from "../models/ProductEmbedding.js"
+import { getEmbedding } from "../utils/getEmbeddings.js"
 
 export const addProduct = AsyncHandler(async (req, res) => {
   const { name, description, price, stock,category,brand } = req.body;
@@ -20,6 +22,26 @@ export const addProduct = AsyncHandler(async (req, res) => {
     stock,
     seller: sellerId,
   });
+
+  try {
+    const textForEmbedding = `${name} ${description || ""} ${brand || ""} ${category || ""}`;
+    const vector = await getEmbedding(textForEmbedding);
+    const embedding = Array.isArray(vector[0]) ? vector[0] : vector;
+
+    await ProductEmbedding.create({
+      product: product._id,
+      embedding,
+      metadata: {
+        seller: sellerId,
+        price,
+        stock,
+        brand,
+        category,
+      },
+    });
+  } catch (err) {
+    console.error("Product embedding failed:", err.message);
+  }
 
   return res
     .status(201)
