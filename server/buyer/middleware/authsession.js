@@ -2,6 +2,8 @@ import { AsyncHandler } from "../utils/AsyncHandler.js";
 import User from "../models/User.js";
 import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
+dotenv.config()
 
 export const authsession = AsyncHandler(async (req, res, next) => {
     const token = req.headers.authorization;

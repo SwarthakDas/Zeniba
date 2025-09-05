@@ -1,6 +1,9 @@
+import dotenv from "dotenv"
+dotenv.config()
+
 export async function getEmbedding(text) {
   const response = await fetch(
-    "https://router.huggingface.co/hf-inference/models/Qwen/Qwen3-Embedding-0.6B/pipeline/feature-extraction",
+    "https://router.huggingface.co/hf-inference/models/intfloat/multilingual-e5-large/pipeline/feature-extraction",
     {
       headers: {
         Authorization: `Bearer ${process.env.HF_TOKEN}`,
@@ -11,6 +14,7 @@ export async function getEmbedding(text) {
     }
   );
   const result = await response.json();
+  console.log(response.text())
   return result;
 }
 

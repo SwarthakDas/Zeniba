@@ -4,6 +4,12 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import ProductEmbedding from "../models/ProductEmbedding.js"
 import { getEmbedding } from "../utils/getEmbeddings.js"
+import { Pinecone } from "@pinecone-database/pinecone";
+import dotenv from "dotenv"
+dotenv.config()
+
+const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+const index = pc.Index("ecom-embeddings");
 
 export const addProduct = AsyncHandler(async (req, res) => {
   const { name, description, price, stock,category,brand } = req.body;
@@ -27,7 +33,10 @@ export const addProduct = AsyncHandler(async (req, res) => {
     const textForEmbedding = `${name} ${description || ""} ${brand || ""} ${category || ""}`;
     const vector = await getEmbedding(textForEmbedding);
     const embedding = Array.isArray(vector[0]) ? vector[0] : vector;
-
+    
+    if (!Array.isArray(embedding) || embedding.some(v => typeof v !== "number")) {
+      throw new Error("Invalid embedding format from HuggingFace");
+    }
     await ProductEmbedding.create({
       product: product._id,
       embedding,
@@ -39,6 +48,23 @@ export const addProduct = AsyncHandler(async (req, res) => {
         category,
       },
     });
+
+    await index
+    .namespace("ecom")
+    .upsert([
+      {
+        id: product._id.toString(),
+        values: embedding,
+        metadata: {
+          seller: sellerId.toString(),
+          price,
+          stock,
+          brand,
+          category,
+        },
+      },
+    ]);
+
   } catch (err) {
     console.error("Product embedding failed:", err.message);
   }

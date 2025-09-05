@@ -50,3 +50,18 @@ export const login = AsyncHandler(async (req, res) => {
 
   res.json(new ApiResponse(200, {accessToken, refreshToken}, "Google login successful"));
 });
+
+export const refreshAccessToken = AsyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) throw new ApiError(400, "Refresh token required");
+
+  const user = await User.findOne({ refreshToken });
+  if (!user) throw new ApiError(401, "Invalid refresh token");
+
+  try {
+    const newAccessToken = user.generateAccessToken();
+    res.json(new ApiResponse(200, { accessToken: newAccessToken }, "Access token refreshed"));
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while refreshing access token");
+  }
+});
