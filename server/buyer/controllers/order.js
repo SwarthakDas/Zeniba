@@ -10,6 +10,7 @@ import { getEmbedding } from "../utils/getEmbeddings.js"
 import ProductEmbedding from "../models/ProductEmbedding.js"
 import UserEmbedding from "../models/UserEmbedding.js"
 import dotenv from "dotenv"
+import ClickedProduct from "../models/ClickedProduct.js";
 dotenv.config()
 
 const razorpay = new Razorpay({
@@ -99,6 +100,19 @@ export const placeOrder = AsyncHandler(async (req, res) => {
     }
   } catch (err) {
     console.error("Order embedding log failed:", err.message);
+  }
+
+  try {
+    const clicked = await ClickedProduct.findOne({ user: req.user._id });
+    if (clicked) {
+      const orderedIds = populatedOrder.items.map(i => i.product._id.toString());
+      clicked.clickedProducts = clicked.clickedProducts.filter(
+        (p) => !orderedIds.includes(p.product.toString())
+      );
+      await clicked.save();
+    }
+  } catch (err) {
+    console.error("ClickedProduct removal after order failed:", err.message);
   }
 
   return res
