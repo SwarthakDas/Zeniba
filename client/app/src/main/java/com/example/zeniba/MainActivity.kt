@@ -1,40 +1,33 @@
 package com.example.zeniba
 
 import android.os.Bundle
-import android.window.SplashScreen
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.zeniba.screens.Splashscreen
-import com.example.zeniba.ui.theme.ZenibaTheme
+import com.example.zeniba.navigation.AppNavigation
+import com.example.zeniba.screens.CatagoryScreen
 
 class MainActivity : ComponentActivity() {
+
+    private val TAG = "MainActivity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Log.d(TAG, "onCreate called")
+
         setContent {
-            Splashscreen()
+            AppNavigation()
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+
+
 
 @Preview(showBackground = true,showSystemUi = true)
 @Composable
 fun GreetingPreview() {
-    ZenibaTheme {
-        Greeting("Android")
-    }
 }

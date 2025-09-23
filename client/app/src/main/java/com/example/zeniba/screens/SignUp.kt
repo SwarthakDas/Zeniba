@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,15 +15,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -38,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -46,14 +43,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.zeniba.R
 import com.example.zeniba.ui.theme.PoppinsFontFamily
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
-import java.util.Vector
 
 
 @Composable
-fun SignUp() {
+fun SignUp(navController: NavHostController) {
 
 
 
@@ -62,7 +59,7 @@ fun SignUp() {
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = Color(0xFFF0F0EE))
-                .padding(10.dp,30.dp,10.dp,10.dp),
+                .padding(10.dp, 30.dp, 10.dp, 10.dp),
 
 
 
@@ -88,7 +85,7 @@ fun SignUp() {
                 modifier = Modifier
                     .width(120.dp)
                     .height(120.dp)
-                    .padding(10.dp,0.dp),
+                    .padding(10.dp, 0.dp),
                 contentScale = ContentScale.Fit,
 
 
@@ -97,7 +94,7 @@ fun SignUp() {
             Spacer(modifier = Modifier.height(36.dp))
 
             Column(modifier= Modifier
-                .fillMaxHeight(0.7f)
+
                 .fillMaxWidth(),
                 horizontalAlignment= Alignment.CenterHorizontally
 
@@ -116,6 +113,9 @@ fun SignUp() {
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+
+
                 var email by remember { mutableStateOf("") }
                 TextInput(
                     text = email,
@@ -126,6 +126,7 @@ fun SignUp() {
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
+
 
                 var password by remember { mutableStateOf("") }
                 TextInput(
@@ -140,6 +141,17 @@ fun SignUp() {
 
                 GreenButton(text = "Done", onClick ={} )
 
+                TextButton(onClick = { /*TODO*/ },
+                ) {
+                    Text(text = "Cancel",
+
+                        fontSize = 15.sp,
+                        fontFamily = PoppinsFontFamily,
+                        fontWeight = FontWeight.Light,
+                    )
+
+
+                }
 
 
 
@@ -159,7 +171,7 @@ fun TextInput(
     placeholder: String,
     onTextChange: (String) -> Unit,
     isPassword: Boolean = false,
-    leadingIcon: ImageVector = Icons.Default.AccountCircle,
+    leadingIcon: ImageVector ?= null,
     leadingIconDescription: String = "Icon"
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -179,10 +191,12 @@ fun TextInput(
             errorIndicatorColor = Color.Transparent
         ),
         leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = leadingIconDescription
-            )
+            leadingIcon?.let {
+                Icon(
+                    imageVector = it,
+                    contentDescription = leadingIconDescription
+                )
+            }
         },
         trailingIcon = if (isPassword) {
             {
@@ -208,10 +222,12 @@ fun TextInput(
 }
 
 
+
 @Preview(showBackground = true,showSystemUi = true)
 @Composable
 fun PreviewSignup() {
+    SignUp(navController = rememberNavController())
 
-    SignUp()
+
 
 }
