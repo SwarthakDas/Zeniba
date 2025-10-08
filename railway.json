@@ -1,6 +1,7 @@
 {
   "build": {
-    "builder": "DOCKER",
-    "rootDirectory": "server"
+    "builder": "nixpacks",
+    "buildCommand": "cd server && docker-compose build",
+    "startCommand": "cd server && docker-compose up"
   }
 }
