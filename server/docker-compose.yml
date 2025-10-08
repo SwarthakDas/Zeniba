@@ -2,7 +2,10 @@ version: "3.8"
 
 services:
   buyer:
-    build: ./buyer
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: npm start --prefix buyer
     expose:
       - "3001"
     environment:
@@ -25,7 +28,10 @@ services:
       - .env
 
   seller:
-    build: ./seller
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: npm start --prefix seller
     expose:
       - "3002"
     environment:
