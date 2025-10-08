@@ -9,9 +9,8 @@ import crypto from "crypto"
 import { getEmbedding } from "../utils/getEmbeddings.js"
 import ProductEmbedding from "../models/ProductEmbedding.js"
 import UserEmbedding from "../models/UserEmbedding.js"
-import dotenv from "dotenv"
+ 
 import ClickedProduct from "../models/ClickedProduct.js";
-dotenv.config()
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_ID_KEY,

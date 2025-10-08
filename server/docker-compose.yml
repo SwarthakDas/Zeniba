@@ -3,13 +3,47 @@ version: "3.8"
 services:
   buyer:
     build: ./buyer
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - CLIENT_URL=${CLIENT_URL}
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${BUYER_PORT}
+      - WEB_CLIENT_ID=${WEB_CLIENT_ID}
+      - ANDROID_CLIENT_ID=${ANDROID_CLIENT_ID}
+      - RAZORPAY_ID_KEY=${RAZORPAY_ID_KEY}
+      - RAZORPAY_SECRET_KEY=${RAZORPAY_SECRET_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+    restart: unless-stopped
+    env_file:
+      - .env
 
   seller:
     build: ./seller
-    ports:
-      - "3002:3002"
+    expose:
+      - "3002"
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - CLIENT_URL=${CLIENT_URL}
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${SELLER_PORT}
+      - WEB_CLIENT_ID=${WEB_CLIENT_ID}
+      - ANDROID_CLIENT_ID=${ANDROID_CLIENT_ID}
+      - HF_TOKEN=${HF_TOKEN}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - ACCESS_TOKEN_EXPIRY=${ACCESS_TOKEN_EXPIRY}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - REFRESH_TOKEN_EXPIRY=${REFRESH_TOKEN_EXPIRY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+    restart: unless-stopped
+    env_file:
+      - .env
 
   nginx:
     image: nginx:latest
@@ -20,3 +54,4 @@ services:
     depends_on:
       - buyer
       - seller
+    restart: unless-stopped

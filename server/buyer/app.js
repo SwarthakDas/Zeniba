@@ -1,14 +1,11 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { router as authRoutes } from "./routes/auth.js";
 import { router as cartRoutes } from "./routes/cart.js";
 import { router as discoverRoutes } from "./routes/discover.js";
 import { router as orderhRoutes } from "./routes/order.js";
 import { router as reviewRoutes } from "./routes/review.js";
 import { router as wishlistRoutes } from "./routes/wishlist.js";
-
-dotenv.config();
 
 const app = express();
 
