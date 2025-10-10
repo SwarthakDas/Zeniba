@@ -5,6 +5,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import ProductEmbedding from "../models/ProductEmbedding.js"
 import { getEmbedding } from "../utils/getEmbeddings.js"
 import { Pinecone } from "@pinecone-database/pinecone";
+import dotenv from "dotenv"
+dotenv.config()
 
 const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 const index = pc.Index("ecom-embeddings");

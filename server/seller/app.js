@@ -3,12 +3,13 @@ import cors from "cors";
 import { router as authRoutes } from "./routes/auth.js";
 import { router as orderRoutes } from "./routes/order.js";
 import {router as productRoutes} from "./routes/product.js"
+import dotenv from "dotenv"
+dotenv.config()
 
 const app = express();
 
 app.use(cors({
   origin: process.env.CLIENT_URL,
-  methods: ["GET", "POST"],
   allowedHeaders: ["Authorization", "Content-Type"],
   credentials: true,
 }));

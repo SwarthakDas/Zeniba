@@ -6,6 +6,8 @@ import { router as discoverRoutes } from "./routes/discover.js";
 import { router as orderhRoutes } from "./routes/order.js";
 import { router as reviewRoutes } from "./routes/review.js";
 import { router as wishlistRoutes } from "./routes/wishlist.js";
+import dotenv from "dotenv"
+dotenv.config();
 
 const app = express();
 

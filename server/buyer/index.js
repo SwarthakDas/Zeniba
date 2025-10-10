@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { app } from "./app.js";
 import process from "node:process";
+import dotenv from "dotenv"
+dotenv.config()
 
 const connectDB=async()=>{
     try {
