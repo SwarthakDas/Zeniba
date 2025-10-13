@@ -118,9 +118,12 @@ Zeniba is a full-featured fashion e-commerce platform connecting buyers, sellers
 ### 1️⃣ Backend Server Setup
 
 
+```markdown
 git clone https://github.com/jyotirmay0/Zeniba.git
 cd server
 docker compose up --build
+```
+
 
 
 The backend will start on the default configured port.
