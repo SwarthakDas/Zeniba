@@ -6,6 +6,8 @@ import ProductEmbedding from "../models/ProductEmbedding.js"
 import { getEmbedding } from "../utils/getEmbeddings.js"
 import { Pinecone } from "@pinecone-database/pinecone";
 import dotenv from "dotenv"
+import cloudinary from "../utils/Cloudinary.js";
+import fs from 'fs';
 dotenv.config()
 
 const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
@@ -115,4 +117,35 @@ export const getMyProducts = AsyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, products, "Seller products fetched"));
+});
+
+export const addImages = AsyncHandler(async (req, res) => {
+  const { productid } = req.params;
+  const sellerId = req.user._id;
+  if (!req.files || req.files.length===0)throw new ApiError(400, "Images not received");
+
+  const upload=await Promise.all(
+    req.files.map(async(file)=>{
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: 'profile_pics',
+        crop: 'limit'
+      });
+      await fs.promises.unlink(file.path).catch(() => {});
+      return result.secure_url;
+    })
+  )
+
+  const product = await Product.findOneAndUpdate(
+    { _id: productid, seller: sellerId },
+    { $addToSet: {images:{$each:upload}} },
+    { new: true }
+  );
+
+  if (!product) {
+    throw new ApiError(404, "Product not found or unauthorized");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, { pic: product.images }, "Product images uploaded successfully")
+  );
 });
