@@ -21,13 +21,7 @@ app.use(cors({
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-app.use("/auth",authRoutes)
-app.use("/cart", cartRoutes);
-app.use("/discover", discoverRoutes);
-app.use("/order", orderRoutes);
-app.use("/review", reviewRoutes);
-app.use("/wishlist", wishlistRoutes);
-app.use("/click", clickRoutes);
+app.use("",authRoutes,cartRoutes,discoverRoutes,orderRoutes,reviewRoutes,wishlistRoutes,clickRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

@@ -4,6 +4,6 @@ import { addToWishlist, getWishlist, removeFromWishlist } from "../controllers/w
 
 export const router=Router()
 
-router.get("/", authsession,getWishlist);
-router.post("/", authsession,addToWishlist);
-router.delete("/:productId", authsession,removeFromWishlist);
+router.get("/wishlist", authsession,getWishlist);
+router.post("/wishlist", authsession,addToWishlist);
+router.delete("/wishlist/:productId", authsession,removeFromWishlist);

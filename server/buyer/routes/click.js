@@ -4,5 +4,5 @@ import { getMostClicked, trackClick } from "../controllers/click.js";
 
 export const router = Router()
 
-router.post("/", authsession, trackClick);
+router.post("/click", authsession, trackClick);
 router.get("/most-clicked", authsession, getMostClicked);

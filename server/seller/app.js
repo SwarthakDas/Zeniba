@@ -17,9 +17,7 @@ app.use(cors({
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-app.use("/auth",authRoutes)
-app.use("/order", orderRoutes);
-app.use("/product", productRoutes);
+app.use("",authRoutes, orderRoutes,productRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
