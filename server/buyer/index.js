@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
-import app from "./app.js";
 import dotenv from "dotenv"
 dotenv.config()
+import mongoose from "mongoose";
+import app from "./app.js";
 
 const connectDB=async()=>{
     try {
-        const res=await mongoose.connect(`${process.env.MONGO_URI}`)
+        await mongoose.connect(`${process.env.MONGO_URI}`)
         console.log("DB connected")
     } catch (error) {
         console.error("Failed to connect Database ",error)
