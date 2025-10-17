@@ -4,12 +4,8 @@ import { addToCart, clearCart, getCart, removeCartItem, updateCartItem } from ".
 
 export const router=Router()
 
-router.get("/cart", authsession,getCart);
-router.post("/cart", authsession,addToCart);
-router.patch("/cart",authsession,updateCartItem)
-router.delete("/cart/:productId",authsession,removeCartItem)
-router.delete("/cart",authsession,clearCart)
-
-
-
-
+router.get("/", authsession,getCart);
+router.post("/", authsession,addToCart);
+router.patch("/",authsession,updateCartItem)
+router.delete("/:productId",authsession,removeCartItem)
+router.delete("/",authsession,clearCart)

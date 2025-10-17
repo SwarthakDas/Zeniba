@@ -1,10 +1,8 @@
-import express from "express";
+import { Router } from "express";
 import { authsession } from "../middleware/authsession.js";
 import { getMostClicked, trackClick } from "../controllers/click.js";
 
-const router = express.Router();
+export const router = Router()
 
-router.post("/click", authsession, trackClick);
+router.post("/", authsession, trackClick);
 router.get("/most-clicked", authsession, getMostClicked);
-
-export default router;

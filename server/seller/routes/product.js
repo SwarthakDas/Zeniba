@@ -5,8 +5,8 @@ import upload from "../middleware/multer.js";
 
 export const router=Router()
 
-router.post("/product", authsession,addProduct);
-router.patch("/product/:productid", authsession,updateProduct);
-router.delete("/product/:productid", authsession,deleteProduct);
-router.get("/product",authsession,getMyProducts)
+router.post("/", authsession,addProduct);
+router.patch("/:productid", authsession,updateProduct);
+router.delete("/:productid", authsession,deleteProduct);
+router.get("/",authsession,getMyProducts)
 router.post('/upload-image/:productid',authsession, upload.array('image',5), addImages);
